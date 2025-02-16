@@ -1,0 +1,7 @@
+torch
+transformers
+sentence-transformers
+qdrant-client
+
+farm-haystack
+farm-haystack[preprocessing]
