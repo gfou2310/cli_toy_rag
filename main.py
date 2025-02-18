@@ -1,33 +1,43 @@
-from src.config import CONFIG
+from src.rag_pipeline import RetrievalPipeline
+from src.config import DATA_CONFIG, FAISS_CONFIG, MODEL_CONFIG
 from src.document_processor import DocumentProcessor
-from src.document_store import VectorStore
-from src.embeddings import EmbeddingModel
-from src.rag_pipeline import RAGPipeline
+from src.ingestion_pipeline import IngestionPipeline
+from src.vector_store import VectorStore
+
 
 def main():
-    # Initialize components
-    doc_processor = DocumentProcessor(
-        chunk_size=CONFIG["CHUNK_SIZE"],
-        chunk_overlap=CONFIG["CHUNK_OVERLAP"]
-    )
-    vector_store = VectorStore()
-    embedding_model = EmbeddingModel(CONFIG["EMBEDDING_MODEL"])
+    if FAISS_CONFIG["FAISS_INDEX_PATH"].exists() and FAISS_CONFIG["FAISS_CONFIG_PATH"].exists():
+        print("Loading existing vector store...")
+        _vector_store = VectorStore.load()
+    else:
+        print("No existing vector store found. Creating new one...")
+        vector_store = VectorStore()
 
-    # Process documents
-    documents = doc_processor.process_documents(CONFIG["PDF_DIR"])
+        print(DATA_CONFIG["PDF_DIR"])
 
-    # Generate embeddings and add to vector store
-    embeddings = embedding_model.embed([doc.content for doc in documents])
-    vector_store.add_documents(documents, embeddings)
+        _ingestion_pipeline = IngestionPipeline(
+            DocumentProcessor(),
+            vector_store
+        ).run(DATA_CONFIG["PDF_DIR"])
 
-    # Initialize RAG pipeline
-    rag = RAGPipeline(vector_store, embedding_model)
+        vector_store.save()
+        print("New vector store created and saved.")
 
-    # Example usage
-    query = "How to remove the cylinder head?"
-    response = rag.generate_response(query)
-    print(f"Query: {query}")
-    print(f"Response: {response}")
+    # retrieval = RetrievalPipeline(vector_store=_vector_store)
+    #
+    # result = retrieval.retrieve(
+    #     query="How to remove the cylinder head?",
+    #     top_k=5
+    # )
+    #
+    # if result["success"]:
+    #     for doc in result["documents"]:
+    #         print(f"Document Start_________________________________: {doc.content} \n {doc.meta}"
+    #               f"Document End__________________________________")
+    # else:
+    #     print(f"Error: {result['error']}")
+
+
 
 if __name__ == "__main__":
     main()

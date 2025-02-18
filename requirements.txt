@@ -2,6 +2,9 @@ torch
 transformers
 sentence-transformers
 qdrant-client
-
+haystack
 farm-haystack
 farm-haystack[preprocessing]
+farm-haystack[FAISSDocumentStore]
+faiss-cpu
+farm-haystack[sql]

@@ -1,29 +1,67 @@
-from haystack.nodes import PDFToTextConverter, PreProcessor
-from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
-class DocumentProcessor:
-    def __init__(self, chunk_size=500, chunk_overlap=50):
-        self.pdf_converter = PDFToTextConverter()
-        self.preprocessor = PreProcessor(
-            clean_empty_lines=True,
-            clean_whitespace=True,
-            clean_header_footer=True,
-            split_by="word",
-            split_length=chunk_size,
-            split_overlap=chunk_overlap,
-            split_respect_sentence_boundary=True,
+from haystack.nodes import BaseComponent, PDFToTextConverter, PreProcessor
+from haystack.schema import Document, MultiLabel
+from transformers import AutoTokenizer
+
+from src.config import MODEL_CONFIG
+
+
+class DocumentProcessor(BaseComponent):
+    outgoing_edges = 1
+
+    def __init__(self):
+        super().__init__()
+        self.pdf_converter = PDFToTextConverter(keep_physical_layout=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_CONFIG["EMBEDDING_MODEL"])
+
+        self.page_preprocessor = PreProcessor(
+            split_by="page",
+            split_length=1,  # Keep each page as a separate document
+            split_respect_sentence_boundary=False,
+            add_page_number=True,
         )
 
-    def process_documents(self, pdf_dir):
-        documents = []
-        pdf_files = Path(pdf_dir).glob("*.pdf")
+        self.passage_preprocessor = PreProcessor(
+                split_by="passage",
+                tokenizer=self.tokenizer,
+                split_length=self.tokenizer.model_max_length,
+                split_respect_sentence_boundary=False,
+                add_page_number = True
+            )
 
-        for pdf_file in pdf_files:
-            # Convert PDF to text documents
-            docs = self.pdf_converter.convert(file_path=pdf_file)
+    def run(
+            self,
+            query: Optional[str] = None,
+            file_paths: Optional[List[str]] = None,
+            labels: Optional[MultiLabel] = None,
+            documents: Optional[List[Document]] = None,
+            meta: Optional[dict] = None
+    ) -> Dict[str, List[Document]]:
 
-            # Preprocess and split documents
-            processed_docs = self.preprocessor.process(docs)
-            documents.extend(processed_docs)
+        pdf_docs = self.pdf_converter.convert(file_path=file_paths)
+        page_docs = self.page_preprocessor.process(pdf_docs)
 
-        return documents
+        final_docs = []
+        for doc in page_docs:
+            page_number = doc.meta.get("page", 1)  # Extract page number metadata
+            processed_passages = self.passage_preprocessor.process([doc])
+
+            for passage in processed_passages:
+                passage.meta["page_number"] = page_number  # Retain page number in each passage
+                final_docs.append(passage)
+
+        return {"documents": final_docs}
+
+
+    def run_batch(
+            self,
+            queries: Optional[Union[str, List[str]]] = None,
+            file_paths: Optional[List[str]] = None,
+            labels: Optional[Union[MultiLabel, List[MultiLabel]]] = None,
+            documents: Optional[Union[List[Document], List[List[Document]]]] = None,
+            meta: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None,
+            params: Optional[dict] = None,
+            debug: Optional[bool] = None
+    ):
+        pass

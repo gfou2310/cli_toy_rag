@@ -1,41 +1,33 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from src.config import CONFIG
+from haystack import Pipeline
 
-class RAGPipeline:
-    def __init__(self, vector_store, embedding_model):
-        self.vector_store = vector_store
-        self.embedding_model = embedding_model
 
-        # Initialize LLM
-        self.tokenizer = AutoTokenizer.from_pretrained(CONFIG["LLM_MODEL"])
-        self.llm = AutoModelForCausalLM.from_pretrained(CONFIG["LLM_MODEL"])
+class RetrievalPipeline:
+    def __init__(self, vector_store):
+        # Get the retriever from vector store
+        self.retriever = vector_store.get_retriever()
 
-    def generate_response(self, query):
-        # Get query embedding and search for relevant documents
-        query_embedding = self.embedding_model.embed([query])[0]
-        relevant_docs = self.vector_store.search(query_embedding, top_k=CONFIG["TOP_K"])
+        # Create retrieval pipeline
+        self.pipeline = Pipeline()
+        self.pipeline.add_node(component=self.retriever, name="Retriever", inputs=["Query"])
 
-        # Create prompt with context
-        context = "\n".join([doc.content for doc in relevant_docs])
-        prompt = f"""Based on the following context, please answer the question.
+    def retrieve(self, query: str, top_k: int = 5) -> dict:
+        try:
+            # Run the pipeline
+            result = self.pipeline.run(
+                query=query,
+                params={
+                    "Retriever": {"top_k": top_k}
+                }
+            )
 
-Context:
-{context}
+            return {
+                "documents": result["documents"],
+                "success": True
+            }
 
-Question: {query}
-
-Answer:"""
-
-        # Generate response
-        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
-        outputs = self.llm.generate(
-            inputs.input_ids,
-            max_length=2048,
-            num_return_sequences=1,
-            temperature=0.7,
-            top_p=0.95,
-            do_sample=True
-        )
-
-        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return response.split("Answer:")[-1].strip()
+        except Exception as e:
+            return {
+                "documents": None,
+                "success": False,
+                "error": str(e)
+            }
