@@ -1,10 +1,11 @@
-from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from haystack.nodes import BaseComponent, PDFToTextConverter, PreProcessor
 from haystack.schema import Document, MultiLabel
 from transformers import AutoTokenizer
 
-from src.config import MODEL_CONFIG
+from src.config import EMBDD_CONFIG
 
 
 class DocumentProcessor(BaseComponent):
@@ -13,12 +14,14 @@ class DocumentProcessor(BaseComponent):
     def __init__(self):
         super().__init__()
         self.pdf_converter = PDFToTextConverter(keep_physical_layout=True)
-        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_CONFIG["EMBEDDING_MODEL"])
+        self.tokenizer = AutoTokenizer.from_pretrained(EMBDD_CONFIG["EMBDD_MODEL"])
 
         self.page_preprocessor = PreProcessor(
             split_by="page",
             split_length=1,  # Keep each page as a separate document
             split_respect_sentence_boundary=False,
+            progress_bar=False,
+            max_chars_check=20_000,
             add_page_number=True,
         )
 
@@ -27,6 +30,8 @@ class DocumentProcessor(BaseComponent):
                 tokenizer=self.tokenizer,
                 split_length=self.tokenizer.model_max_length,
                 split_respect_sentence_boundary=False,
+                progress_bar=False,
+                max_chars_check=20_000,
                 add_page_number = True
             )
 
@@ -37,21 +42,23 @@ class DocumentProcessor(BaseComponent):
             labels: Optional[MultiLabel] = None,
             documents: Optional[List[Document]] = None,
             meta: Optional[dict] = None
-    ) -> Dict[str, List[Document]]:
-
-        pdf_docs = self.pdf_converter.convert(file_path=file_paths)
-        page_docs = self.page_preprocessor.process(pdf_docs)
+    ) -> Tuple[Dict[str, List[Document]], str]:
 
         final_docs = []
-        for doc in page_docs:
-            page_number = doc.meta.get("page", 1)  # Extract page number metadata
-            processed_passages = self.passage_preprocessor.process([doc])
+        for file_path in file_paths:
+            pdf_docs = self.pdf_converter.convert(file_path=Path(file_path))
+            page_docs = self.page_preprocessor.process(pdf_docs)
 
-            for passage in processed_passages:
-                passage.meta["page_number"] = page_number  # Retain page number in each passage
-                final_docs.append(passage)
+            for doc in page_docs:
+                page_number = doc.meta.get("page", 1)
+                processed_passages = self.passage_preprocessor.process([doc])
+                assert len(processed_passages) <= self.tokenizer.model_max_length
 
-        return {"documents": final_docs}
+                for passage in processed_passages:
+                    passage.meta["page_number"] = page_number
+                    final_docs.append(passage)
+
+        return {"documents": final_docs}, "output_1"
 
 
     def run_batch(

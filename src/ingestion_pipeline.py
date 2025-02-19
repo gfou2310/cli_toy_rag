@@ -1,24 +1,28 @@
-from pathlib import Path
-from typing import Union
-
 from haystack import Pipeline
+
+from src.config import DATA_CONFIG
+from src.document_processor import DocumentProcessor
+from src.vector_store import VectorStore
 
 
 class IngestionPipeline:
-    def __init__(self, document_processor, vector_store):
+    def __init__(self):
+        self.vector_store = VectorStore()
         self.pipeline = Pipeline()
-        self.document_processor = document_processor
-        self.vector_store = vector_store
-        self.pipeline.add_node(component=self.document_processor, name="DocumentProcessor", inputs=["File"])
+        self.pipeline.add_node(component=DocumentProcessor(), name="DocumentProcessor", inputs=["File"])
         self.pipeline.add_node(component=self.vector_store, name="VectorStore", inputs=["DocumentProcessor"])
 
-    def run(self, document_path: Union[str, Path]):
-        files = list(document_path.glob("*.pdf"))
+    def run(self) -> None:
+        pdf_dir = DATA_CONFIG["PDF_DIR"]
+        if not pdf_dir.exists():
+            raise FileNotFoundError(f"PDF directory not found: {pdf_dir}")
 
-        for file in files:
-            doc_result = self.document_processor.run(file_paths=str(file))
-            if doc_result and "documents" in doc_result:
-                self.vector_store.run(documents=doc_result["documents"])
-            print(f"Processed and stored: {file}")
+        file_paths = list(pdf_dir.glob("*.pdf"))
+        if file_paths:
+            self.pipeline.run(file_paths=[str(file) for file in file_paths])
+            self.vector_store.save()
+        else:
+            raise ValueError(f"No PDF files found in directory: {pdf_dir}")
 
-        return f"Processed {len(files)} documents"
+
+

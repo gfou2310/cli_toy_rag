@@ -1,8 +1,9 @@
-from src.rag_pipeline import RetrievalPipeline
-from src.config import DATA_CONFIG, FAISS_CONFIG, MODEL_CONFIG
-from src.document_processor import DocumentProcessor
+from src.config import FAISS_CONFIG
 from src.ingestion_pipeline import IngestionPipeline
+from src.rag_pipeline import RAGPipeline
 from src.vector_store import VectorStore
+
+import pprint
 
 
 def main():
@@ -11,32 +12,14 @@ def main():
         _vector_store = VectorStore.load()
     else:
         print("No existing vector store found. Creating new one...")
-        vector_store = VectorStore()
-
-        print(DATA_CONFIG["PDF_DIR"])
-
-        _ingestion_pipeline = IngestionPipeline(
-            DocumentProcessor(),
-            vector_store
-        ).run(DATA_CONFIG["PDF_DIR"])
-
-        vector_store.save()
+        IngestionPipeline().run()
         print("New vector store created and saved.")
 
-    # retrieval = RetrievalPipeline(vector_store=_vector_store)
-    #
-    # result = retrieval.retrieve(
-    #     query="How to remove the cylinder head?",
-    #     top_k=5
-    # )
-    #
-    # if result["success"]:
-    #     for doc in result["documents"]:
-    #         print(f"Document Start_________________________________: {doc.content} \n {doc.meta}"
-    #               f"Document End__________________________________")
-    # else:
-    #     print(f"Error: {result['error']}")
+    rag_pipeline = RAGPipeline()
+    result = rag_pipeline.run(query="How to remove the cylinder head?")
+    print(result)
 
+    pprint.pprint(result)
 
 
 if __name__ == "__main__":

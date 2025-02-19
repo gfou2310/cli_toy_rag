@@ -1,33 +1,35 @@
+from typing import Optional
+
 from haystack import Pipeline
+from haystack.nodes import JoinDocuments, PromptNode
+
+from src.config import CHAT_MODEL_CONFIG, RETRIEVER_CONFIG
+from src.prompt_template import prompt_template
+from src.vector_store import VectorStore
 
 
-class RetrievalPipeline:
-    def __init__(self, vector_store):
-        # Get the retriever from vector store
-        self.retriever = vector_store.get_retriever()
+class RAGPipeline:
+    def __init__(self):
+        self.retriever = VectorStore().get_retriever()
+        self.retriever.top_k = RETRIEVER_CONFIG["TOP_K"]
+        self.join_documents = JoinDocuments()
+        self.generator = PromptNode(
+            max_length=500,
+            model_name_or_path=CHAT_MODEL_CONFIG["MODEL"],
+            default_prompt_template=prompt_template,
+            truncate=False,
+            model_kwargs={
+                "temperature": 0.2,
+                "top_p": 0.9,
+                "frequency_penalty": 0.1,
+                "presence_penalty": 0.2,
+            }
+        )
 
-        # Create retrieval pipeline
         self.pipeline = Pipeline()
         self.pipeline.add_node(component=self.retriever, name="Retriever", inputs=["Query"])
+        self.pipeline.add_node(component=self.join_documents, name="JoinDocuments", inputs=["Retriever"])
+        self.pipeline.add_node(component=self.generator, name="Generator", inputs=["JoinDocuments"])
 
-    def retrieve(self, query: str, top_k: int = 5) -> dict:
-        try:
-            # Run the pipeline
-            result = self.pipeline.run(
-                query=query,
-                params={
-                    "Retriever": {"top_k": top_k}
-                }
-            )
-
-            return {
-                "documents": result["documents"],
-                "success": True
-            }
-
-        except Exception as e:
-            return {
-                "documents": None,
-                "success": False,
-                "error": str(e)
-            }
+    def run(self, query: str) -> Optional[dict]:
+        return self.pipeline.run(query=query)
