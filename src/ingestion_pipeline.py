@@ -6,8 +6,8 @@ from src.vector_store import VectorStore
 
 
 class IngestionPipeline:
-    def __init__(self):
-        self.vector_store = VectorStore()
+    def __init__(self, vector_store: VectorStore):
+        self.vector_store = vector_store
         self.pipeline = Pipeline()
         self.pipeline.add_node(component=DocumentProcessor(), name="DocumentProcessor", inputs=["File"])
         self.pipeline.add_node(component=self.vector_store, name="VectorStore", inputs=["DocumentProcessor"])

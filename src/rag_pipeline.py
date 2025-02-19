@@ -9,20 +9,21 @@ from src.vector_store import VectorStore
 
 
 class RAGPipeline:
-    def __init__(self):
-        self.retriever = VectorStore().get_retriever()
+    def __init__(self, vector_store: VectorStore):
+        self.retriever = vector_store.get_retriever()
         self.retriever.top_k = RETRIEVER_CONFIG["TOP_K"]
         self.join_documents = JoinDocuments()
+
         self.generator = PromptNode(
-            max_length=500,
+            max_length=CHAT_MODEL_CONFIG["MAX_LENGTH"],
             model_name_or_path=CHAT_MODEL_CONFIG["MODEL"],
             default_prompt_template=prompt_template,
             truncate=False,
             model_kwargs={
-                "temperature": 0.2,
-                "top_p": 0.9,
-                "frequency_penalty": 0.1,
-                "presence_penalty": 0.2,
+                "temperature": CHAT_MODEL_CONFIG["TEMPERATURE"],
+                "top_p": CHAT_MODEL_CONFIG["TOP_P"],
+                "frequency_penalty": CHAT_MODEL_CONFIG["FREQUENCY_PENALTY"],
+                "presence_penalty": CHAT_MODEL_CONFIG["PRESENCE_PENALTY"]
             }
         )
 

@@ -17,7 +17,8 @@ class VectorStore(BaseComponent):
         self.document_store = FAISSDocumentStore(
             embedding_dim=EMBDD_CONFIG["EMBDD_DIM"],
             similarity="dot_product",
-            faiss_index_path=FAISS_CONFIG["FAISS_INDEX_PATH"] if self.doc_store_exists else None
+            faiss_index_path=FAISS_CONFIG["FAISS_INDEX_PATH"] if self.doc_store_exists else None,
+            faiss_config_path=FAISS_CONFIG["FAISS_CONFIG_PATH"] if self.doc_store_exists else None
 
         )
         self.retriever = EmbeddingRetriever(
@@ -35,20 +36,6 @@ class VectorStore(BaseComponent):
             index_path=index_path,
             config_path=config_path
         )
-
-    @classmethod
-    def load(cls):
-        """Load from saved state"""
-        instance = cls()
-        instance.document_store = FAISSDocumentStore.load(
-            index_path=FAISS_CONFIG["FAISS_INDEX_PATH"],
-            config_path=FAISS_CONFIG["FAISS_CONFIG_PATH"]
-        )
-        instance.retriever = EmbeddingRetriever(
-            document_store=instance.document_store,
-            embedding_model=EMBDD_CONFIG["EMBDD_MODEL"]
-        )
-        return instance
 
     def run(
             self,

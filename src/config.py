@@ -11,8 +11,15 @@ EMBDD_CONFIG = {
     "EMBDD_DIM": 768,
 }
 
-CHAT_MODEL_CONFIG ={
+# Chat model configurations
+CHAT_MODEL_CONFIG = {
     "MODEL": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "TEMPERATURE": 0.2,  # Controls randomness
+    "TOP_P": 0.9,  # Nucleus sampling parameter
+    "FREQUENCY_PENALTY": 0.1,  # Reduces word repetition
+    "PRESENCE_PENALTY": 0.2,  # Encourages discussing new topics
+    "MAX_LENGTH": 500,  # Maximum length of the generated response
+    "TOP_K": 50,  # Limits vocabulary to top K tokens during generation
 }
 
 # Retriever parameters

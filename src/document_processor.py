@@ -52,7 +52,6 @@ class DocumentProcessor(BaseComponent):
             for doc in page_docs:
                 page_number = doc.meta.get("page", 1)
                 processed_passages = self.passage_preprocessor.process([doc])
-                assert len(processed_passages) <= self.tokenizer.model_max_length
 
                 for passage in processed_passages:
                     passage.meta["page_number"] = page_number
