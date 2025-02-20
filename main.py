@@ -19,7 +19,7 @@ def main():
     rag_pipeline = RAGPipeline(vector_store=vector_store)
 
     # Continuous interaction loop
-    print("\nWelcome to the RAG system! Type 'quit' or 'exit' to end the session.")
+    print("\n\nWelcome to the RAG system! Type 'quit' or 'exit' to end the session.")
     while True:
         try:
             # Get user input
@@ -37,7 +37,7 @@ def main():
 
             result = rag_pipeline.run(query=query)
             print("\nAssistant Response:")
-            pprint.pprint(result["results"][0])
+            pprint.pprint(result)
 
         except KeyboardInterrupt:
             print("\nProgram interrupted by user. Exiting...")
