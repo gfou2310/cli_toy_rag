@@ -1,6 +1,7 @@
-# RAG PoC# RAG Assignment
+# RAG PoC
 
-A Retrieval-Augmented Generation (RAG) system built with Haystack that combines document retrieval with language model generation for accurate and context-aware responses.
+A Retrieval-Augmented Generation (RAG) PoC built with Haystack that combines document retrieval with language model 
+generation for accurate and context-aware responses.
 
 ## Description
 
