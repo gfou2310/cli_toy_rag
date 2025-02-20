@@ -15,15 +15,13 @@ class RAGPipeline:
         self.join_documents = JoinDocuments()
 
         self.generator = PromptNode(
-            max_length=CHAT_MODEL_CONFIG["MAX_LENGTH"],
+            max_length=CHAT_MODEL_CONFIG["MAX_NEW_TOKENS"],
             model_name_or_path=CHAT_MODEL_CONFIG["MODEL"],
             default_prompt_template=prompt_template,
             truncate=False,
             model_kwargs={
-                "temperature": CHAT_MODEL_CONFIG["TEMPERATURE"],
-                "top_p": CHAT_MODEL_CONFIG["TOP_P"],
-                "frequency_penalty": CHAT_MODEL_CONFIG["FREQUENCY_PENALTY"],
-                "presence_penalty": CHAT_MODEL_CONFIG["PRESENCE_PENALTY"]
+                "do_sample": CHAT_MODEL_CONFIG["DO_SAMPLE"],
+                "repetition_penalty": CHAT_MODEL_CONFIG["REPETITION_PENALTY"]
             }
         )
 
