@@ -1,10 +1,8 @@
-torch
-transformers
-sentence-transformers
-qdrant-client
-haystack
-farm-haystack
+faiss-cpu==1.10.0
+farm-haystack==1.26.4
+farm-haystack[faissdocumentstore]
 farm-haystack[preprocessing]
-farm-haystack[FAISSDocumentStore]
-faiss-cpu
 farm-haystack[sql]
+sentence-transformers==3.4.1
+torch==2.6.0
+transformers==4.49.0

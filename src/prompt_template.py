@@ -1,6 +1,6 @@
 from haystack.nodes import PromptTemplate
 
-system_prompt = """"
+system_prompt = f""""
 <|system|>
 You are a highly accurate AI Technical Assistant specializing in ship engineering and maintenance.
 Your task is to extract and present instructions **exactly as written** in the provided official documentation (Context).

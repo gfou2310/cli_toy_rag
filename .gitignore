@@ -16,3 +16,6 @@ data/pdfs/*
 
 # Cache directory for vector store
 cache/
+
+# DB generated files
+*.db
