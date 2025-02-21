@@ -15,7 +15,7 @@ EMBDD_CONFIG = {
 CHAT_MODEL_CONFIG = {
     "MODEL": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
     "MAX_NEW_TOKENS": 250,
-    "DO_SAMPLE": False, # Let us not allow our model to be creative/diverse
+    "DO_SAMPLE": False, # Let us not allow our model to be creative/diverse, more deterministic output
     "REPETITION_PENALTY": 1.0 # Let us encourage repetition to use more words found in the context/manual
 }
 
