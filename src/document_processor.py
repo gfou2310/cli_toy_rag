@@ -1,11 +1,18 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
-from haystack.nodes import BaseComponent, PDFToTextConverter, PreProcessor
-from haystack.schema import Document, MultiLabel
-from transformers import AutoTokenizer
-
+from haystack.nodes import BaseComponent
+from haystack.nodes import PDFToTextConverter
+from haystack.nodes import PreProcessor
+from haystack.schema import Document
+from haystack.schema import MultiLabel
 from src.config import EMBDD_CONFIG
+from transformers import AutoTokenizer
 
 
 class DocumentProcessor(BaseComponent):
@@ -20,7 +27,7 @@ class DocumentProcessor(BaseComponent):
         # However, the all-mpnet-base-v2 model is designed to process a maximum of 384 tokens.
         # To ensure consistency between the tokenizer and the model, we explicitly use 384 as max length.
         # https://huggingface.co/sentence-transformers/all-mpnet-base-v2/discussions/15
-        self.tokenizer.model_max_length = 350 # We'll leave some space for adding extra info after chunking
+        self.tokenizer.model_max_length = 350  # We'll leave some space for adding extra info after chunking
         assert self.tokenizer.model_max_length == 350
 
         self.page_preprocessor = PreProcessor(
@@ -41,24 +48,23 @@ class DocumentProcessor(BaseComponent):
         )
 
         self.chunk_preprocessor = PreProcessor(
-                split_by="token",
-                split_length=int(self.tokenizer.model_max_length - 10), # Create space for the overlap
-                tokenizer=self.tokenizer,
-                split_overlap=10,
-                split_respect_sentence_boundary=False,
-                progress_bar=False,
-                add_page_number=True,
-            )
+            split_by="token",
+            split_length=int(self.tokenizer.model_max_length - 10),  # Create space for the overlap
+            tokenizer=self.tokenizer,
+            split_overlap=10,
+            split_respect_sentence_boundary=False,
+            progress_bar=False,
+            add_page_number=True,
+        )
 
     def run(
-            self,
-            query: Optional[str] = None,
-            file_paths: Optional[List[str]] = None,
-            labels: Optional[MultiLabel] = None,
-            documents: Optional[List[Document]] = None,
-            meta: Optional[dict] = None
+        self,
+        query: Optional[str] = None,
+        file_paths: Optional[List[str]] = None,
+        labels: Optional[MultiLabel] = None,
+        documents: Optional[List[Document]] = None,
+        meta: Optional[dict] = None,
     ) -> Tuple[Dict[str, List[Document]], str]:
-
         final_chunks = []
         for file_path in file_paths:
             pdf_docs = self.pdf_converter.convert(file_path=Path(file_path))
@@ -81,21 +87,22 @@ class DocumentProcessor(BaseComponent):
                         # Let us do a sanity check here to be sure our chunks comply to the tokenizers max length.
                         chunk_tokens = self.tokenizer.encode(chunk.content, truncation=False, add_special_tokens=True)
                         if len(chunk_tokens) > self.tokenizer.model_max_length:
-                            raise ValueError(f"Chunk length is {len(chunk_tokens)} but max length is {self.tokenizer.model_max_length}")
+                            raise ValueError(
+                                f"Chunk length is {len(chunk_tokens)} but max length is {self.tokenizer.model_max_length}"
+                            )
 
                         final_chunks.append(chunk)
 
         return {"documents": final_chunks}, "output_1"
 
-
     def run_batch(
-            self,
-            queries: Optional[Union[str, List[str]]] = None,
-            file_paths: Optional[List[str]] = None,
-            labels: Optional[Union[MultiLabel, List[MultiLabel]]] = None,
-            documents: Optional[Union[List[Document], List[List[Document]]]] = None,
-            meta: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None,
-            params: Optional[dict] = None,
-            debug: Optional[bool] = None
+        self,
+        queries: Optional[Union[str, List[str]]] = None,
+        file_paths: Optional[List[str]] = None,
+        labels: Optional[Union[MultiLabel, List[MultiLabel]]] = None,
+        documents: Optional[Union[List[Document], List[List[Document]]]] = None,
+        meta: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None,
+        params: Optional[dict] = None,
+        debug: Optional[bool] = None,
     ):
         pass

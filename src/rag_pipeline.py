@@ -1,9 +1,10 @@
 from typing import Optional
 
 from haystack import Pipeline
-from haystack.nodes import JoinDocuments, PromptNode
-
-from src.config import CHAT_MODEL_CONFIG, RETRIEVER_CONFIG
+from haystack.nodes import JoinDocuments
+from haystack.nodes import PromptNode
+from src.config import CHAT_MODEL_CONFIG
+from src.config import RETRIEVER_CONFIG
 from src.prompt_template import prompt_template
 from src.vector_store import VectorStore
 
@@ -21,8 +22,8 @@ class RAGPipeline:
             truncate=False,
             model_kwargs={
                 "do_sample": CHAT_MODEL_CONFIG["DO_SAMPLE"],
-                "repetition_penalty": CHAT_MODEL_CONFIG["REPETITION_PENALTY"]
-            }
+                "repetition_penalty": CHAT_MODEL_CONFIG["REPETITION_PENALTY"],
+            },
         )
 
         self.pipeline = Pipeline()

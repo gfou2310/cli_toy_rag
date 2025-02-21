@@ -26,7 +26,7 @@ def main():
             query = input("\nUser input:").strip()
 
             # Check for exit commands
-            if query.lower() in ['quit', 'exit']:
+            if query.lower() in ["quit", "exit"]:
                 print("Thank you for using the RAG system. Goodbye!")
                 break
 
@@ -43,7 +43,7 @@ def main():
             print("\nProgram interrupted by user. Exiting...")
             break
         except Exception as e:
-            print(f"\nAn error occurred: {str(e)}")
+            print(f"\nAn error occurred: {e!s}")
             print("Please try again with a different question.")
 
 
