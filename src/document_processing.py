@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any
 from typing import Dict
 from typing import List
@@ -7,12 +6,14 @@ from typing import Tuple
 from typing import Union
 
 from haystack.nodes import BaseComponent
-from haystack.nodes import PDFToTextConverter
 from haystack.nodes import PreProcessor
 from haystack.schema import Document
 from haystack.schema import MultiLabel
-from src.config import EMBDD_CONFIG
 from transformers import AutoTokenizer
+from pdf2image import convert_from_path
+
+from src.config import EMBDD_CONFIG
+from src.text_extraction import extract_text_from_pdf_image
 
 
 class DocumentProcessor(BaseComponent):
@@ -20,36 +21,18 @@ class DocumentProcessor(BaseComponent):
 
     def __init__(self):
         super().__init__()
-        self.pdf_converter = PDFToTextConverter(keep_physical_layout=True)
         self.tokenizer = AutoTokenizer.from_pretrained(EMBDD_CONFIG["EMBDD_MODEL"])
 
         # Note: The tokenizer's model_max_length attribute returns 512 tokens.
         # However, the all-mpnet-base-v2 model is designed to process a maximum of 384 tokens.
         # To ensure consistency between the tokenizer and the model, we explicitly use 384 as max length.
         # https://huggingface.co/sentence-transformers/all-mpnet-base-v2/discussions/15
-        self.tokenizer.model_max_length = 350  # We'll leave some space for adding extra info after chunking
-        assert self.tokenizer.model_max_length == 350
-
-        self.page_preprocessor = PreProcessor(
-            split_by="page",
-            split_length=1,
-            split_respect_sentence_boundary=False,
-            progress_bar=False,
-            max_chars_check=15_000,
-            add_page_number=True,
-        )
-
-        self.passage_preprocessor = PreProcessor(
-            split_by="passage",
-            split_respect_sentence_boundary=False,
-            progress_bar=False,
-            max_chars_check=15_000,
-            add_page_number=True,
-        )
+        self.tokenizer.model_max_length = 384
+        assert self.tokenizer.model_max_length == 384
 
         self.chunk_preprocessor = PreProcessor(
             split_by="token",
-            split_length=int(self.tokenizer.model_max_length - 10),  # Create space for the overlap
+            split_length=int(self.tokenizer.model_max_length - 25),
             tokenizer=self.tokenizer,
             split_overlap=10,
             split_respect_sentence_boundary=False,
@@ -65,24 +48,26 @@ class DocumentProcessor(BaseComponent):
         documents: Optional[List[Document]] = None,
         meta: Optional[dict] = None,
     ) -> Tuple[Dict[str, List[Document]], str]:
+
         final_chunks = []
         for file_path in file_paths:
-            pdf_docs = self.pdf_converter.convert(file_path=Path(file_path))
-            page_docs = self.page_preprocessor.process(pdf_docs)
+            images = convert_from_path(file_path, dpi=300)
 
-            for page_doc in page_docs:
-                page_number = page_doc.meta.get("page", 1)
-                processed_passages = self.passage_preprocessor.process([page_doc])
+            for i, image in enumerate(images):
+                page_number = i + 1
+                texts = extract_text_from_pdf_image(image)
 
-                for passage in processed_passages:
-                    passage.meta["page"] = page_number
+                for text in texts:
+                    page_document = Document.from_dict({"content": text, "content_type": "text"})
 
-                    passage_chunks = self.chunk_preprocessor.process([passage])
-                    for chunk in passage_chunks:
-                        chunk.meta["page"] = passage.meta["page"]
+                    page_chunks = self.chunk_preprocessor.process(page_document)
+                    for chunk in page_chunks:
+                        chunk.meta["page"] = page_number
+                        chunk.meta["file_path"] = file_path
+                        chunk.meta["file_name"] = file_path.split("/")[-1]
 
-                        # We'll add here the prefix <New Document:> on each chunk followed by a <Page number:> pointer
-                        chunk.content = f"New Document:\nPage number: {chunk.meta['page']}\n{chunk.content}"
+                        # We'll add here the prefix <New Document: file name> on each chunk followed by a <Page number:> pointer
+                        chunk.content = f"New Document:{chunk.meta["file_name"]}\nPage number: {chunk.meta['page']}\n{chunk.content}"
 
                         # Let us do a sanity check here to be sure our chunks comply to the tokenizers max length.
                         chunk_tokens = self.tokenizer.encode(chunk.content, truncation=False, add_special_tokens=True)

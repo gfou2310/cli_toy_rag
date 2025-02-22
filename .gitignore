@@ -11,9 +11,6 @@ __pycache__/
 # IntelliJ output
 out/
 
-# Content of data/pdfs
-data/pdfs/*
-
 # Cache directory for vector store
 cache/
 

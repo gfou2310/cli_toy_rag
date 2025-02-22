@@ -1,6 +1,6 @@
 from haystack import Pipeline
 from src.config import DATA_CONFIG
-from src.document_processor import DocumentProcessor
+from src.document_processing import DocumentProcessor
 from src.vector_store import VectorStore
 
 
