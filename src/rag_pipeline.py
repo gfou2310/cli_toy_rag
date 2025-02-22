@@ -23,6 +23,7 @@ class RAGPipeline:
             model_kwargs={
                 "do_sample": CHAT_MODEL_CONFIG["DO_SAMPLE"],
                 "repetition_penalty": CHAT_MODEL_CONFIG["REPETITION_PENALTY"],
+                "temperature": CHAT_MODEL_CONFIG["TEMPERATURE"],
             },
         )
 

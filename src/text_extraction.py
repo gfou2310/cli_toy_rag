@@ -1,12 +1,13 @@
-from typing import Tuple, List
+from difflib import SequenceMatcher
+from typing import List
+from typing import Tuple
 
 import layoutparser as lp
 from PIL import Image
 from pytesseract import pytesseract
-from difflib import SequenceMatcher
 
 
-layout_model = lp.Detectron2LayoutModel('lp://PubLayNet/mask_rcnn_R_50_FPN_3x/config')
+layout_model = lp.Detectron2LayoutModel("lp://PubLayNet/mask_rcnn_R_50_FPN_3x/config")
 
 
 def extract_text_from_image(image: Image) -> Tuple[list[str], list[str]]:
@@ -28,7 +29,6 @@ def extract_text_from_image(image: Image) -> Tuple[list[str], list[str]]:
     right_column = []
 
     for block in sorted_blocks:
-
         if block[0][0] < (page_width // 4) and block[0][2] > (page_width // 1.6):
             left_column.append(block)
             continue
@@ -82,7 +82,7 @@ def clean_text(lst_text: List[str]) -> str:
     text_with_no_duplicates = remove_duplicates(lst_text)
     clean_text_1 = remove_duplicates(text_with_no_duplicates, sequence_matcher=True)
 
-    return '\n'.join(clean_text_1)
+    return "\n".join(clean_text_1)
 
 
 def extract_text_from_pdf_image(pdf_page_image: Image) -> List[str]:

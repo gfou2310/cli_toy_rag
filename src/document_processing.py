@@ -9,11 +9,10 @@ from haystack.nodes import BaseComponent
 from haystack.nodes import PreProcessor
 from haystack.schema import Document
 from haystack.schema import MultiLabel
-from transformers import AutoTokenizer
 from pdf2image import convert_from_path
-
 from src.config import EMBDD_CONFIG
 from src.text_extraction import extract_text_from_pdf_image
+from transformers import AutoTokenizer
 
 
 class DocumentProcessor(BaseComponent):
@@ -66,11 +65,15 @@ class DocumentProcessor(BaseComponent):
                         chunk.meta["file_path"] = file_path
                         chunk.meta["file_name"] = file_path.split("/")[-1]
 
-                        # We'll add here the prefix <New Document: file name> on each chunk followed by a <Page number:> pointer
-                        chunk.content = f"New Document:{chunk.meta["file_name"]}\nPage number: {chunk.meta['page']}\n{chunk.content}"
+                        # We'll add here the prefix <New Document: file name> on each chunk followed by
+                        # a <Page number:> page_number
+                        chunk.content = \
+                            f"New Document:{chunk.meta["file_name"]}\nPage number: {chunk.meta['page']}\n{chunk.content}"
 
                         # Let us do a sanity check here to be sure our chunks comply to the tokenizers max length.
                         chunk_tokens = self.tokenizer.encode(chunk.content, truncation=False, add_special_tokens=True)
+                        print(f"Chunk length is {len(chunk_tokens)}")
+                        print(f"Max length is {self.tokenizer.model_max_length}")
                         if len(chunk_tokens) > self.tokenizer.model_max_length:
                             raise ValueError(
                                 f"Chunk length is {len(chunk_tokens)} but max length is {self.tokenizer.model_max_length}"

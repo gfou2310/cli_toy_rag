@@ -5,13 +5,13 @@ farm-haystack[preprocessing]
 farm-haystack[sql]
 sentence-transformers==3.4.1
 torch==2.6.0
-layoutparser
+layoutparser==0.3.4
 layoutparser[effdet]
 layoutparser[ocr]
-torchvision>=0.10.0
-transformers
-pdf2image
-pytesseract
+torchvision==0.21.0
+transformers==4.49.0
+pdf2image==1.17.0
+pytesseract==0.3.13
 pillow==9.5.0
 
 #sudo apt-get install libjpeg-dev
