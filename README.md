@@ -83,4 +83,3 @@ python main.py
         - Enter questions/queries
         - Get AI-generated responses based on the documents
         - Type 'quit' or 'exit' to end the session
-
