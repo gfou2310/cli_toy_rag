@@ -72,8 +72,6 @@ class DocumentProcessor(BaseComponent):
 
                         # Let us do a sanity check here to be sure our chunks comply to the tokenizers max length.
                         chunk_tokens = self.tokenizer.encode(chunk.content, truncation=False, add_special_tokens=True)
-                        print(f"Chunk length is {len(chunk_tokens)}")
-                        print(f"Max length is {self.tokenizer.model_max_length}")
                         if len(chunk_tokens) > self.tokenizer.model_max_length:
                             raise ValueError(
                                 f"Chunk length is {len(chunk_tokens)} but max length is {self.tokenizer.model_max_length}"

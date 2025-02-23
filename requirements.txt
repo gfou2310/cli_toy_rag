@@ -3,19 +3,13 @@ farm-haystack==1.26.4
 farm-haystack[faissdocumentstore]
 farm-haystack[preprocessing]
 farm-haystack[sql]
-sentence-transformers==3.4.1
-torch==2.6.0
 layoutparser==0.3.4
 layoutparser[effdet]
 layoutparser[ocr]
+pdf2image==1.17.0
+pillow==9.5.0
+pytesseract==0.3.13
+sentence-transformers==3.4.1
+torch==2.6.0
 torchvision==0.21.0
 transformers==4.49.0
-pdf2image==1.17.0
-pytesseract==0.3.13
-pillow==9.5.0
-
-#sudo apt-get install libjpeg-dev
-
-
-#  pip install "git+https://github.com/facebookresearch/detectron2.git@v0.5#egg=detectron2"
-
